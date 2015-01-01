@@ -11,20 +11,26 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 
 /*
  * Use the Google+ API to get Activities for a userId and 
@@ -39,7 +45,8 @@ import org.json.simple.parser.ParseException;
 
 public class Main {
 	//TODO Add file location as a program parameter or store data in memory
-	public static File file = new File("/Users/whetzel/Documents/workspace/google-year-in-review/data/googleActivitiesFile.txt");
+	//public static File file = new File("/Users/whetzel/Documents/workspace/google-year-in-review/data/googleActivitiesFile.txt");
+	public static File file = new File("./data/googleActivitiesFile.txt");
 	
 	/**
 	 * @param args
@@ -57,7 +64,7 @@ public class Main {
 		
 		// ** DO NOT DELETE ** Remove comment after getting data file to develop scoring section
 		// If file does not exists, then create it
-		if (!file.exists()) {
+		/* if (!file.exists()) {
 			file.createNewFile();
 		}
 		FileWriter fw = new FileWriter(file.getAbsoluteFile());
@@ -70,9 +77,13 @@ public class Main {
 		getAllActivities(userId, apiKey, nextPageToken, bw);
 		bw.close();
 		System.out.println("Date out of range found. Move to processing data!");
+		*/
 		//** DO NOT DELETE ** Remove comment after getting data file to develop scoring section
 		
-		
+		/**
+		 * Set of methods that use static file generated from methods above 
+		 * to rank the posts before downloading images
+		 */
 		rankData();
 		
 	}
@@ -210,7 +221,7 @@ public class Main {
 	 * @throws java.text.ParseException 
 	 */
 	private static void rankData() throws java.text.ParseException {
-		HashMap<String, ArrayList<String>> data = new HashMap<String, ArrayList<String>>();
+		HashMap<String, String> data = new HashMap<String, String>();
 		String[] dataItems = new String[7];
 		ArrayList<String> list = new ArrayList<String>();
 		HashMap<String, Integer> allScores = new HashMap<String, Integer>();
@@ -247,7 +258,9 @@ public class Main {
 				list.add(date);
 				list.add(url);
 				//System.out.println("LIST: "+list+"\n");
-				data.put(activity, list); //Add contents of line to data structure
+				
+				data.put(activity, url); //Add contents of line to data structure, Try just URL in HashMap
+				//data = createDataHashMap(activity, list); //create data structure in method to avoid while loop issues
 				//Clear ArrayList for next line
 				list.clear();
 				
@@ -267,22 +280,27 @@ public class Main {
 				String reshareScore = reshareScoreItems[1];
 				//System.out.println("Items to Score: "+displayName+"\t"+replyScore+"\t"+plusOneScore+"\t"+reshareScore);
 				
+				//Sort posts by Date to change Date format time stamp to string month name 
+				allDates.put(activity, date);
+				//sortedByDate = sortPostsByDate(allDates);
+				//System.out.println("sortedByDate size:"+sortedByDate.size());
+				
 				//Score posts 
 				int totalScore = scorePost(displayName,replyScore,plusOneScore,reshareScore);
 				//System.out.println("Total Score: "+totalScore+"\n");
 				allScores.put(activity, totalScore);
 				//System.out.println("All Score Data"+allScores);
 				
-				//Sort posts by Date to have 1-3/month
-				allDates.put(activity, date);
-				sortedByDate = sortPostsByDate(allDates);
-				
-				//Sort by score --> might want to combine with sortPostsByDate
-				sortedByScore = sortPosts(allScores);
+				//Sort by score --> DO LATER
+				//sortedByScore = sortPostsByScore(allScores);
 				//System.out.println("Sorted Scores: "+sortedScores);
-			}		
+				
+			}	
+			//list.clear();  //--> Need to find location to clear the ArrayList for "data"  
+			
 			//Print out top 1-3 posts/month 
-			getDataForTopPosts(sortedByScore, data);
+			System.out.println("DATA HashMap: "+data);
+			getDataForTopPosts(allDates, data, allScores);
 			
  
 		} catch (IOException e) {
@@ -296,7 +314,6 @@ public class Main {
 		}	
 	}
 	
-
 	/**
 	 * Sort posts by Date
 	 * @param allDates
@@ -305,6 +322,9 @@ public class Main {
 	 */
 	private static Map<String, String> sortPostsByDate(
 			HashMap<String, String> allDates) throws java.text.ParseException {
+		HashMap<String, String> reformattedAllDates = new HashMap<String, String>();
+		HashMap<String, String> test = new HashMap<String, String>();
+		
 		SimpleDateFormat sdf = new SimpleDateFormat("E MMM dd HH:mm:ss Z yyyy");
 		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 		
@@ -320,6 +340,7 @@ public class Main {
 		Date october = df.parse("2014-10-01");
 		Date november = df.parse("2014-11-01");
 		Date december = df.parse("2014-12-01");
+		Date january15 = df.parse("2015-01-01");
 		
 		// Iterate through HashMap
 		Iterator it = allDates.entrySet().iterator();
@@ -336,44 +357,57 @@ public class Main {
 	        
 	        //Group by date, Can only use compareTo with Date Object 
 	        if (dateFormatted.compareTo(january)>0 && dateFormatted.compareTo(february)<0) {
-	        	//System.out.println("** Date is in January "+dateFormatted+"\n\n");
-	        	//HashMap januaryPosts = sortPosts();
+	        	//System.out.println("** Date is in January "+dateFormatted+"for activityId: "+id+"\n\n");
+	        	reformattedAllDates.put(id, "january"); //ERROR - Only adds last seen key/value
+	        	test.putAll(reformattedAllDates);
 	        }
 	        if (dateFormatted.compareTo(february)>0 && dateFormatted.compareTo(march)<0) {
 	        	//System.out.println("** Date is in February "+dateFormatted+"\n\n");
+	        	reformattedAllDates.put(id, "february");
 	        }
 	        if (dateFormatted.compareTo(march)>0 && dateFormatted.compareTo(april)<0) {
 	        	//System.out.println("** Date is in March "+dateFormatted+"\n\n");
+	        	reformattedAllDates.put(id, dateFormatted.toString());
 	        }
 	        if (dateFormatted.compareTo(april)>0 && dateFormatted.compareTo(may)<0) {
 	        	//System.out.println("** Date is in April "+dateFormatted+"\n\n");
+	        	reformattedAllDates.put(id, dateFormatted.toString());
 	        }
 	        if (dateFormatted.compareTo(may)>0 && dateFormatted.compareTo(june)<0) {
 	        	//System.out.println("** Date is in May "+dateFormatted+"\n\n");
+	        	reformattedAllDates.put(id, dateFormatted.toString());
 	        }
 	        if (dateFormatted.compareTo(june)>0 && dateFormatted.compareTo(july)<0) {
 	        	//System.out.println("** Date is in June "+dateFormatted+"\n\n");
+	        	reformattedAllDates.put(id, dateFormatted.toString());
 	        }
 	        if (dateFormatted.compareTo(july)>0 && dateFormatted.compareTo(august)<0) {
 	        	//System.out.println("** Date is in July "+dateFormatted+"\n\n");
+	        	reformattedAllDates.put(id, dateFormatted.toString());
 	        }
 	        if (dateFormatted.compareTo(august)>0 && dateFormatted.compareTo(september)<0) {
 	        	//System.out.println("** Date is in August "+dateFormatted+"\n\n");
+	        	reformattedAllDates.put(id, dateFormatted.toString());
 	        }
 	        if (dateFormatted.compareTo(september)>0 && dateFormatted.compareTo(october)<0) {
 	        	//System.out.println("** Date is in September "+dateFormatted+"\n\n");
+	        	reformattedAllDates.put(id, dateFormatted.toString());
 	        }
 	        if (dateFormatted.compareTo(october)>0 && dateFormatted.compareTo(november)<0) {
 	        	//System.out.println("** Date is in October "+dateFormatted+"\n\n");
+	        	reformattedAllDates.put(id, dateFormatted.toString());
 	        }
 	        if (dateFormatted.compareTo(november)>0 && dateFormatted.compareTo(december)<0) {
 	        	//System.out.println("** Date is in November "+dateFormatted+"\n\n");
+	        	reformattedAllDates.put(id, dateFormatted.toString());
 	        }
-	        if (dateFormatted.compareTo(december)>0) {
+	        if (dateFormatted.compareTo(december)>0 && dateFormatted.compareTo(january15)<0) {
 	        	//System.out.println("** Date is in December "+dateFormatted+"\n\n");
+	        	reformattedAllDates.put(id, dateFormatted.toString());
 	        }
 	    }	
-		return null;
+		//return reformattedAllDates;
+	    return test;
 	}
 	
 	
@@ -387,8 +421,6 @@ public class Main {
 	 * @param reshares
 	 * @return 
 	 */
-
-
 	private static int scorePost(String displayName, String replyScore,
 			String plusOneScore, String reshareScore) {
 		// Process data to weight as follows; replies x3, plusOnes x1, reshares x2, #throughglass x5 (display name)
@@ -398,7 +430,7 @@ public class Main {
 		}
 		//if (replyScore != null && !replyScore.isEmpty()) {
 		if (!replyScore.equals("null")) {
-			System.out.println("RS: \'"+replyScore+"\'");
+			//System.out.println("RS: \'"+replyScore+"\'");
 			score = Integer.parseInt(replyScore) * 3;
 		}
 		if (!plusOneScore.equals("null")) {
@@ -417,7 +449,7 @@ public class Main {
 	 * @param allScores
 	 * @return 
 	 */
-	private static Map<String, Integer> sortPosts(HashMap<String, Integer> allScores) {
+	private static Map<String, Integer> sortPostsByScore(HashMap<String, Integer> allScores) {
 		// Convert Map to List
 		// http://www.mkyong.com/java/how-to-sort-a-map-in-java/
 		List<Map.Entry<String, Integer>> list = 
@@ -443,25 +475,63 @@ public class Main {
 	
 	
 	/**
-	 * Get top 15 scoring post and their data
+	 * Get top 3 scoring posts for each month and their photo data(?)
+	 * @param sortedByDate 
 	 * @param sortedScores
 	 * @param data
+	 * @param allScores 
 	 */
-	private static void getDataForTopPosts(Map<String, Integer> sortedScores,
-			HashMap<String, ArrayList<String>> data) {
-		int count = 0;
-		String key = null;
-		for (Entry<String, Integer> entry : sortedScores.entrySet()) {
-			count++;
-			if (count <= 15) {
-				key = entry.getKey();
-				//System.out.println("Key: " + entry.getKey() + " Value: "
-				//		+ entry.getValue());
+	private static void getDataForTopPosts(Map<String, String> sortedByDate, HashMap<String, String> data, 
+			HashMap<String, Integer> allScores) {
+		String[] months = {"january", "february", "march", "april", "may",
+				"june", "july", "august", "september", "october", "november", "december"};
+		
+		//Invert sortedByDate HashMap to be able to get all values for a given key(month)
+		Multimap<String, String> multiMap = HashMultimap.create();
+		for (Entry<String, String> entry : sortedByDate.entrySet()) {
+		  multiMap.put(entry.getValue(), entry.getKey());
+		}
+		
+		// Iterate through months array
+		for (String m: months) {
+			HashMap<String, Integer> hashMap = new HashMap<String, Integer>(); 
+			System.out.println("Month: "+m);
+			//Get all activityIds (keys) for month "m" from multiMap
+			// http://stackoverflow.com/questions/12710494/java-how-to-get-set-of-keys-having-same-value-in-hashmap
+			for (Entry<String, Collection<String>> entry : multiMap.asMap().entrySet()) {
+			//System.out.println("Original value: " + entry.getKey() + " was mapped to keys: "
+			//		+ entry.getValue());
+				if (m.equals(entry.getKey())) {
+					//Print out all keys for month
+					//System.out.println("Month: " + entry.getKey() + " all activityIds: "
+					//		+ entry.getValue());
+					
+					// Rank scores for posts in the month
+					// Iterate through all activityIds and get the score, then use method to order by score
+					for (String id : entry.getValue()) {
+						Integer score = allScores.get(id);
+						//System.out.println("ID:"+id+" Score:"+score.toString());
+						hashMap.put(id, score);
+					}
+					Map<String, Integer> sortedPosts = sortPostsByScore(hashMap);
+					System.out.println("Sorted score for the month ("+m+"): "+sortedPosts);
+		
+					int scoreCount = 0;	
+					String keyScores = null;
+					for (Entry<String, Integer> entrySortedPosts : sortedPosts.entrySet()) {
+						scoreCount++;
+						if (scoreCount <= 3) {
+							keyScores = entrySortedPosts.getKey();
+							System.out.println("Key: " + entrySortedPosts.getKey() + " Value: "
+									+ entrySortedPosts.getValue());
+							// Get data line for this top score
+							//String dataLine = data.get(keyScores);
+							System.out.println(" Data Line Value: "+data.get(entrySortedPosts.getKey())+"\n");
+						}
+					}
+				}
 			}
 		}
-		// Get data line for this top score
-		//System.out.println(" Data Line Value: "+data.get(key)+"\n");
-		
 	}
 	
 

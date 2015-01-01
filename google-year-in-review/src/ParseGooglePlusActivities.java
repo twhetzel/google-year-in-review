@@ -44,6 +44,7 @@ public class ParseGooglePlusActivities {
 			//Check that date is in Year of Interest,e.g. 2014
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 			Date sdfPublished = null;
+			String dateString = null;
 			try {
 				sdfPublished = sdf.parse(published);
 				//System.out.println("sdfPublishedDate:"+sdfPublished);
@@ -51,6 +52,11 @@ public class ParseGooglePlusActivities {
 				Date endDateOfInterest = sdf.parse("2014-12-31");
 				if (sdfPublished.compareTo(startDateOfInterest)>0 && sdfPublished.compareTo(endDateOfInterest)<0) {
 					//System.out.println("** Item in Year of Interest");
+					dateString = convertDateFormat(sdfPublished);
+					if (dateString == null) {
+						dateString = "defaultDate";
+					}
+					System.out.println("Date: "+dateString);
 				}
 				else {
 					//System.out.println("* Not in Year of Interest");
@@ -102,7 +108,7 @@ public class ParseGooglePlusActivities {
 									JSONObject image = (JSONObject) attachmentObjects.get("image");
 									String url = (String) image.get("url");
 									//System.out.println("URL: "+url);
-								bw.append("ActivityID: "+id+"\tPublishedDate: "+sdfPublished+"\tDisplayName: "+displayName+"\tImageURL: "+url
+								bw.append("ActivityID: "+id+"\tPublishedDate: "+dateString+"\tDisplayName: "+displayName+"\tImageURL: "+url
 										+"\tReplies: "+replyTotalItems+"\tPlusOnes: "+plusOneTotalItems+"\tReshares: "+reshareTotalItems+"\n");
 								}
 								else {
@@ -122,6 +128,80 @@ public class ParseGooglePlusActivities {
 			//System.out.println();
 		}
 		return nextPageToken;
+	}
+
+	/**
+	 * Convert date to name of month
+	 * @param sdfPublished
+	 * @return
+	 * @throws java.text.ParseException 
+	 */
+	private static String convertDateFormat(Date sdfPublished) throws java.text.ParseException {
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+		Date january = df.parse("2014-01-01");
+		Date february = df.parse("2014-02-01");
+		Date march = df.parse("2014-03-01");
+		Date april = df.parse("2014-04-01");
+		Date may = df.parse("2014-05-01");
+		Date june = df.parse("2014-06-01");
+		Date july = df.parse("2014-07-01");
+		Date august = df.parse("2014-08-01");
+		Date september = df.parse("2014-09-01");
+		Date october = df.parse("2014-10-01");
+		Date november = df.parse("2014-11-01");
+		Date december = df.parse("2014-12-01");
+		Date january15 = df.parse("2015-01-01");
+		String dateMonth = null;
+		
+		if (sdfPublished.compareTo(january)>0 && sdfPublished.compareTo(february)<0) {
+			System.out.println("** Date is in January "+sdfPublished);
+			dateMonth = "january";
+		}
+		if (sdfPublished.compareTo(february)>0 && sdfPublished.compareTo(march)<0) {
+        	System.out.println("** Date is in February "+sdfPublished+"\n\n");
+        	dateMonth = "february";
+        }
+        if (sdfPublished.compareTo(march)>0 && sdfPublished.compareTo(april)<0) {
+        	//System.out.println("** Date is in March "+dateFormatted+"\n\n");
+        	dateMonth = "march";
+        }
+        if (sdfPublished.compareTo(april)>0 && sdfPublished.compareTo(may)<0) {
+        	//System.out.println("** Date is in April "+dateFormatted+"\n\n");
+        	dateMonth = "april";
+        }
+        if (sdfPublished.compareTo(may)>0 && sdfPublished.compareTo(june)<0) {
+        	//System.out.println("** Date is in May "+dateFormatted+"\n\n");
+        	dateMonth = "may";
+        }
+        if (sdfPublished.compareTo(june)>0 && sdfPublished.compareTo(july)<0) {
+        	//System.out.println("** Date is in June "+dateFormatted+"\n\n");
+        	dateMonth = "june";
+        }
+        if (sdfPublished.compareTo(july)>0 && sdfPublished.compareTo(august)<0) {
+        	//System.out.println("** Date is in July "+dateFormatted+"\n\n");
+        	dateMonth = "july";
+        }
+        if (sdfPublished.compareTo(august)>0 && sdfPublished.compareTo(september)<0) {
+        	//System.out.println("** Date is in August "+dateFormatted+"\n\n");
+        	dateMonth = "august";
+        }
+        if (sdfPublished.compareTo(september)>0 && sdfPublished.compareTo(october)<0) {
+        	//System.out.println("** Date is in September "+dateFormatted+"\n\n");
+        	dateMonth = "september";
+        }
+        if (sdfPublished.compareTo(october)>0 && sdfPublished.compareTo(november)<0) {
+        	//System.out.println("** Date is in October "+dateFormatted+"\n\n");
+        	dateMonth = "october";
+        }
+        if (sdfPublished.compareTo(november)>0 && sdfPublished.compareTo(december)<0) {
+        	//System.out.println("** Date is in November "+dateFormatted+"\n\n");
+        	dateMonth = "november";
+        }
+        if (sdfPublished.compareTo(december)>0 && sdfPublished.compareTo(january15)<0) {
+        	//System.out.println("** Date is in December "+dateFormatted+"\n\n");
+        	dateMonth = "december";
+        }
+		return dateMonth;
 	}
 }
 
