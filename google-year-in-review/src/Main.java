@@ -32,6 +32,8 @@ import org.json.simple.parser.ParseException;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
+import org.apache.commons.io.FileUtils;
+
 /*
  * Use the Google+ API to get Activities for a userId and 
  * collect all items that contain the post of a public picture. 
@@ -426,12 +428,12 @@ public class Main {
 		// Process data to weight as follows; replies x3, plusOnes x1, reshares x2, #throughglass x5 (display name)
 		int score = 0;
 		if (displayName.contains("#throughglass")) {
-			score = score + 5; 
+			score = score + 3; 
 		}
 		//if (replyScore != null && !replyScore.isEmpty()) {
 		if (!replyScore.equals("null")) {
 			//System.out.println("RS: \'"+replyScore+"\'");
-			score = Integer.parseInt(replyScore) * 3;
+			score = Integer.parseInt(replyScore) * 2;
 		}
 		if (!plusOneScore.equals("null")) {
 			score = Integer.valueOf(plusOneScore) * 1;
@@ -526,13 +528,51 @@ public class Main {
 									+ entrySortedPosts.getValue());
 							// Get data line for this top score
 							//String dataLine = data.get(keyScores);
-							System.out.println(" Data Line Value: "+data.get(entrySortedPosts.getKey())+"\n");
+							String imageUrl = data.get(entrySortedPosts.getKey());
+							System.out.println(" Image URL: "+data.get(entrySortedPosts.getKey())+"\n");
+							downloadImage(imageUrl);
 						}
 					}
 				}
 			}
 		}
 	}
-	
 
+	
+	/**
+	 * Download imageUrl for top scoring posts
+	 * @param imageUrl
+	 */
+	private static void downloadImage(String imageUrl) {
+		// Get file name
+		String file = null;
+		String[] fileName = imageUrl.split("/");
+		for (int i=0; i< fileName.length; i++) {
+			//System.out.println("Split: "+fileName[i]);
+			if (fileName[i].contains("jpg") || (fileName[i].contains("gif"))) {
+				file = fileName[i];
+				System.out.println("FileName: "+file);
+				break;
+			}
+			/*else {
+				file = "file"+i;
+				System.out.println("FileName: "+file);
+			}*/
+		}
+
+		URL url = null;
+		try {
+			url = new URL(imageUrl);
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+		int connectionTimeout = 5000;
+		int readTimeout = 5000;
+		try {
+			org.apache.commons.io.FileUtils.copyURLToFile(url, 
+					new File("./images/"+file), connectionTimeout, readTimeout);
+		} catch (Exception x) { 
+			x.printStackTrace(); 
+		}
+	}
 }
