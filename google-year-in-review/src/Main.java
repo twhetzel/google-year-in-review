@@ -60,13 +60,12 @@ public class Main {
 	 * @throws java.text.ParseException 
 	 */
 	public static void main(String[] args) throws ParseException, InterruptedException, IOException, java.text.ParseException {
-		//String userId = "+EJohnFeig";
 		String userId = "UserIdOfInterest";
 		String apiKey = "YourApiKey";
 		
 		// ** DO NOT DELETE ** Remove comment after getting data file to develop scoring section
 		// If file does not exists, then create it
-		/* if (!file.exists()) {
+		 if (!file.exists()) {
 			file.createNewFile();
 		}
 		FileWriter fw = new FileWriter(file.getAbsoluteFile());
@@ -79,7 +78,7 @@ public class Main {
 		getAllActivities(userId, apiKey, nextPageToken, bw);
 		bw.close();
 		System.out.println("Date out of range found. Move to processing data!");
-		*/
+		
 		//** DO NOT DELETE ** Remove comment after getting data file to develop scoring section
 		
 		/**
@@ -252,10 +251,14 @@ public class Main {
 				String pubDate = dataItems[1];
 				String[] dateItems = pubDate.split(": ");
 				String date = dateItems[1];
-				
-				String imageURL = dataItems[3];	
-				String[] imageURLItems = imageURL.split(": ");
-				String url = imageURLItems[1];
+				 
+				String url = null; 
+				int index = -1;
+				if((dataItems[3] != null) && (index == -1)) {
+					String imageURL = dataItems[3];	
+					String[] imageURLItems = imageURL.split(": ");
+					url = imageURLItems[1];
+				}
 				
 				list.add(date);
 				list.add(url);
@@ -549,7 +552,7 @@ public class Main {
 		String[] fileName = imageUrl.split("/");
 		for (int i=0; i< fileName.length; i++) {
 			//System.out.println("Split: "+fileName[i]);
-			if (fileName[i].contains("jpg") || (fileName[i].contains("gif"))) {
+			if (fileName[i].contains("jpg") || (fileName[i].contains("gif")) || (fileName[i].contains("png"))) {
 				file = fileName[i];
 				System.out.println("FileName: "+file);
 				break;

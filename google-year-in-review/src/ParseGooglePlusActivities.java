@@ -102,13 +102,20 @@ public class ParseGooglePlusActivities {
 								// Only get attachments of photos
 								if (attachmentObjectType.equals("photo")) {
 									String displayName = (String) attachmentObjects.get("displayName");
-									//System.out.println("Display Name: "+displayName);
-
+									//System.err.println("Display Name: "+displayName);
+									String displayName1 = null;
+									
+									//Remove embedded newlines
+									if (displayName != null) {
+										displayName1 = displayName.replace("\n", " ");
+										//System.err.println("Display Name1: "+displayName1);
+									}
+									
 									// Get image and it's URL
 									JSONObject image = (JSONObject) attachmentObjects.get("image");
 									String url = (String) image.get("url");
 									//System.out.println("URL: "+url);
-								bw.append("ActivityID: "+id+"\tPublishedDate: "+dateString+"\tDisplayName: "+displayName+"\tImageURL: "+url
+								bw.append("ActivityID: "+id+"\tPublishedDate: "+dateString+"\tDisplayName: "+displayName1+"\tImageURL: "+url
 										+"\tReplies: "+replyTotalItems+"\tPlusOnes: "+plusOneTotalItems+"\tReshares: "+reshareTotalItems+"\n");
 								}
 								else {
